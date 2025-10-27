@@ -1,0 +1,1314 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Extrator de NF-e (XML) — Upload e cópia rápida</title>
+  <style>
+    body{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding:18px; background:#f7fafc; color:#0f172a}
+    h1{font-size:20px;margin-bottom:6px}
+    .card{background:white;border-radius:10px;padding:14px;margin:12px 0;box-shadow:0 6px 18px rgba(2,6,23,0.06)}
+    label.button{display:inline-block;background:#0369a1;color:white;padding:8px 12px;border-radius:8px;cursor:pointer}
+    input[type=file]{display:none}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+    .field{background:#f8fafc;padding:8px;border-radius:8px;border:1px solid #e6eef5}
+    .field-title{font-size:12px;color:#475569}
+    .field-val{font-weight:600;margin-top:6px;word-break:break-all}
+    button.copy{margin-left:8px;padding:6px 8px;border-radius:8px;border:0;background:#0ea5a4;color:white;cursor:pointer}
+    button.copy.copied{background:#10b981;}
+    table{width:100%;border-collapse:collapse;font-size:11px}
+    th,td{padding:4px;border-bottom:1px solid #e6eef5;text-align:left}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .small{font-size:13px;color:#475569}
+    .badge{background:#eef2ff;padding:6px 8px;border-radius:999px;font-size:12px;cursor:pointer;border:1px solid #e2e8f0}
+    footer{margin-top:18px;color:#64748b;font-size:13px}
+    .origem-nacional{background:#dcfce7;color:#166534;padding:2px 4px;border-radius:3px;font-size:9px}
+    .origem-importacao{background:#fef3c7;color:#92400e;padding:2px 4px;border-radius:3px;font-size:9px}
+    .origem-interestadual{background:#dbeafe;color:#1e40af;padding:2px 4px;border-radius:3px;font-size:9px}
+    .origem-outro{background:#f3f4f6;color:#374151;padding:2px 4px;border-radius:3px;font-size:9px}
+    .file-navigation{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .file-nav-buttons{display:flex;gap:8px}
+    .nav-btn{background:#f1f5f9;border:1px solid #cbd5e1;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px}
+    .nav-btn:disabled{opacity:0.5;cursor:not-allowed}
+    .current-file{font-size:14px;font-weight:500;color:#475569}
+    .item-copied{opacity:0.5;transition:opacity 0.3s ease}
+    .item-copied td{text-decoration:line-through;color:#94a3b8}
+    .copy-all-btn{background:#059669;color:white;border:0;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;margin-bottom:12px}
+    .copy-all-btn.copied{background:#10b981}
+    .copy-all-btn:hover{background:#047857}
+    .items-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .chave-acesso{font-family:monospace;font-size:9px;background:#f1f5f9;padding:1px 3px;border-radius:2px}
+    .compact-data{font-size:9px;color:#475569}
+    .copy-item-btn{padding:2px 4px;border-radius:2px;border:0;background:#0ea5a4;color:white;cursor:pointer;font-size:9px}
+    .copy-item-btn.copied{background:#10b981}
+    .table-container{overflow-x:auto}
+    .payment-section{background:#f0f9ff;border:1px solid#bae6fd;border-radius:8px;padding:12px;margin-bottom:15px}
+    .payment-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:10px}
+    .payment-field{display:flex;flex-direction:column;gap:4px}
+    .payment-label{font-size:12px;font-weight:600;color:#0369a1}
+    .payment-input, .payment-select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px}
+    .crd-input{width:50px;padding:2px 4px;border:1px solid #cbd5e1;border-radius:3px;font-size:10px;text-align:center}
+    .valor-input{width:60px;padding:2px 4px;border:1px solid #cbd5e1;border-radius:3px;font-size:10px;text-align:center}
+    .save-payment-btn{background:#0369a1;color:white;border:0;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px}
+    .save-payment-btn:hover{background:#075985}
+    .numero-pedido{background:#e0f2fe;color:#0369a1;padding:2px 4px;border-radius:3px;font-size:9px;font-weight:600}
+    .parcelas-section{background:#f0fdf4;border:1px solid#bbf7d0;border-radius:8px;padding:12px;margin-bottom:15px}
+    .parcela-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #dcfce7}
+    .parcela-item:last-child{border-bottom:none}
+    .parcela-info{font-size:12px}
+    .parcela-numero{font-weight:600;color:#166534}
+    .parcela-data{color:#475569}
+    .parcela-valor{font-weight:600;color:#059669}
+    .copy-parcela-btn{background:#0ea5a4;color:white;border:0;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;margin-left:8px}
+    .copy-parcela-btn.copied{background:#10b981}
+    .copy-parcela-btn:hover{background:#0c9488}
+    .parcela-actions{display:flex;align-items:center;gap:4px}
+    .total-files-btn{background:#8b5cf6;color:white;border:0;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;margin-left:8px}
+    .total-files-btn.copied{background:#a78bfa}
+    .total-files-btn:hover{background:#7c3aed}
+    .copy-next-btn{background:#7c3aed;color:white;border:0;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;margin-left:8px}
+    .copy-next-btn.copied{background:#a78bfa}
+    .copy-next-btn:hover{background:#6d28d9}
+    .parcelas-buttons{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <h1>Extrator de NF-e (XML) — Upload e cópia rápida</h1>
+  <p class="small">Carregue os arquivos XML da nota e navegue entre eles. Copie todos os itens de uma vez ou individualmente.</p>
+
+  <div class="card">
+    <label class="button">Escolher arquivos XML<input id="file" type="file" accept=".xml" multiple/></label>
+    
+    <div class="file-navigation">
+      <div class="current-file" id="currentFile">Nenhum arquivo selecionado</div>
+      <div class="file-nav-buttons">
+        <button id="btnPrev" class="nav-btn" disabled>← Anterior</button>
+        <button id="btnNext" class="nav-btn" disabled>Próximo →</button>
+        <button id="btnCopyTotalFiles" class="total-files-btn" disabled>Copiar Total: 0</button>
+      </div>
+    </div>
+    
+    <div class="actions">
+      <button id="btnExportJson" class="badge">Exportar JSON</button>
+      <button id="btnExportCsv" class="badge">Exportar CSV (itens)</button>
+      <button id="btnClear" class="badge">Limpar</button>
+    </div>
+    <div id="status" style="margin-top:10px" class="small"></div>
+  </div>
+
+  <div id="results"></div>
+
+  <footer>Se algum campo não aparecer, confira a estrutura do XML (namespaces) — o extrator tenta vários caminhos comuns.</footer>
+
+<script>
+// Atualização: removida dependência de XPath (doc.evaluate) para compatibilidade com navegadores
+function qs(sel,ctx=document){return ctx.querySelector(sel)}
+function qsa(sel,ctx=document){return Array.from(ctx.querySelectorAll(sel))}
+
+// Estado global da aplicação
+const appState = {
+  files: [],
+  currentFileIndex: -1,
+  parsedData: [],
+  copiedItems: new Set(),
+  paymentData: {
+    tipoPagamento: 'BOLETO',
+    parcelas: '1'
+  },
+  itemCRDs: {} // { "0-0": { crd1: "123", crd2: "456", valor: "100.00" }, ... }
+};
+
+// Variável para controlar o ciclo de cópia das parcelas
+let cicloParcelas = {
+  index: 0,
+  tipo: 'data' // 'data' ou 'valor'
+};
+
+// Carregar dados do localStorage
+function loadPaymentData() {
+  const savedPayment = localStorage.getItem('nfePaymentData');
+  const savedCRDs = localStorage.getItem('nfeItemCRDs');
+  
+  if (savedPayment) {
+    appState.paymentData = {...appState.paymentData, ...JSON.parse(savedPayment)};
+  }
+  if (savedCRDs) {
+    appState.itemCRDs = JSON.parse(savedCRDs);
+  }
+}
+
+// Salvar dados no localStorage
+function savePaymentData() {
+  localStorage.setItem('nfePaymentData', JSON.stringify(appState.paymentData));
+}
+
+function saveItemCRDs() {
+  localStorage.setItem('nfeItemCRDs', JSON.stringify(appState.itemCRDs));
+}
+
+// Inicializar carregando dados salvos
+loadPaymentData();
+
+function parseXmlString(xmlStr){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlStr, 'application/xml');
+  const parsererror = doc.getElementsByTagName('parsererror');
+  if(parsererror.length) throw new Error('XML inválido');
+  return doc;
+}
+
+function getElementsByLocalName(root, localName){
+  try{
+    if(root.getElementsByTagNameNS){
+      const nl = root.getElementsByTagNameNS('*', localName);
+      if(nl && nl.length) return Array.from(nl);
+    }
+  }catch(e){}
+
+  const results = [];
+  const start = (root.nodeType === 9) ? root.documentElement : root;
+  if(!start) return results;
+  const walker = document.createTreeWalker(start, NodeFilter.SHOW_ELEMENT, null, false);
+  let node = walker.currentNode || walker.nextNode();
+  while(node){
+    if(node.localName === localName) results.push(node);
+    node = walker.nextNode();
+  }
+  return results;
+}
+
+function findNodesByPath(root, parts){
+  let nodes = [root];
+  for(const part of parts){
+    const next = [];
+    for(const n of nodes){
+      const found = getElementsByLocalName(n, part);
+      for(const f of found) next.push(f);
+    }
+    nodes = next;
+    if(nodes.length === 0) break;
+  }
+  return nodes;
+}
+
+function findFirstTextFrom(root, paths){
+  for(const p of paths){
+    const parts = p.split('/').filter(Boolean);
+    const nodes = findNodesByPath(root, parts);
+    if(nodes && nodes.length) return (nodes[0].textContent || '').trim();
+  }
+  return '';
+}
+
+// Função para extrair número do pedido das observações
+function extractNumeroPedido(doc) {
+  // Procura em infAdic/infCpl que é onde geralmente ficam as observações
+  const infCpl = findFirstTextFrom(doc, ['infAdic/infCpl']);
+  if (infCpl) {
+    // Procura pelo padrão PED- seguido de números (PED-001896)
+    const pedidoMatch = infCpl.match(/PED-(\d+)/i);
+    if (pedidoMatch) {
+      return pedidoMatch[0]; // Retorna "PED-001896"
+    }
+  }
+  
+  // Também procura em infAdic/infAdFisco
+  const infAdFisco = findFirstTextFrom(doc, ['infAdic/infAdFisco']);
+  if (infAdFisco) {
+    const pedidoMatch = infAdFisco.match(/PED-(\d+)/i);
+    if (pedidoMatch) {
+      return pedidoMatch[0];
+    }
+  }
+  
+  return '';
+}
+
+// Função para extrair informações das parcelas
+function extractParcelas(doc) {
+  const parcelas = [];
+  
+  // Procura por elementos de duplicatas (parcelas)
+  const dupPaths = [
+    'cobr/dup',
+    'dup'
+  ];
+  
+  for (const path of dupPaths) {
+    const parts = path.split('/').filter(Boolean);
+    const nodes = findNodesByPath(doc, parts);
+    
+    if (nodes && nodes.length > 0) {
+      nodes.forEach((node) => {
+        const vencimento = findFirstTextFrom(node, ['dVenc']);
+        const valor = findFirstTextFrom(node, ['vDup']);
+        const numeroParcela = findFirstTextFrom(node, ['nDup']);
+        
+        if (vencimento || valor) {
+          parcelas.push({
+            numero: numeroParcela,
+            vencimento: vencimento,
+            valor: valor
+          });
+        }
+      });
+      
+      if (parcelas.length > 0) break;
+    }
+  }
+  
+  // Se não encontrou duplicatas, procura em detPag (pagamentos detalhados)
+  if (parcelas.length === 0) {
+    const detPagPaths = [
+      'pag/detPag',
+      'detPag'
+    ];
+    
+    for (const path of detPagPaths) {
+      const parts = path.split('/').filter(Boolean);
+      const nodes = findNodesByPath(doc, parts);
+      
+      if (nodes && nodes.length > 1) { // Só considera se tiver mais de um pagamento (parcelado)
+        nodes.forEach((node, index) => {
+          const valor = findFirstTextFrom(node, ['vPag']);
+          // Para detPag, geralmente não tem data de vencimento no XML
+          // Mas podemos inferir com base na data de emissão
+          if (valor) {
+            parcelas.push({
+              numero: (index + 1).toString(),
+              vencimento: '', // Não disponível no XML
+              valor: valor
+            });
+          }
+        });
+        
+        if (parcelas.length > 0) break;
+      }
+    }
+  }
+  
+  // Ordena as parcelas por número
+  return parcelas.sort((a, b) => {
+    const numA = parseInt(a.numero) || 0;
+    const numB = parseInt(b.numero) || 0;
+    return numA - numB;
+  });
+}
+
+// Função para extrair informações de pagamento do XML
+function extractPagamentoInfo(doc) {
+  const pagamentoInfo = {
+    tipoPagamento: '',
+    parcelas: [],
+    totalParcelas: 0
+  };
+  
+  // Extrai o tipo de pagamento
+  const tipoPag = findFirstTextFrom(doc, [
+    'pag/tPag',
+    'pag/detPag/tPag',
+    'tPag'
+  ]);
+  
+  // Mapeia códigos de tipo de pagamento para descrições
+  const tiposPagamento = {
+    '01': 'DINHEIRO',
+    '02': 'CHEQUE',
+    '03': 'CARTAO_CREDITO',
+    '04': 'CARTAO_DEBITO',
+    '05': 'CARTAO_CREDITO',
+    '10': 'BOLETO',
+    '11': 'BOLETO',
+    '12': 'BOLETO',
+    '13': 'BOLETO',
+    '15': 'BOLETO',
+    '90': 'OUTRO',
+    '99': 'OUTRO'
+  };
+  
+  pagamentoInfo.tipoPagamento = tiposPagamento[tipoPag] || 'BOLETO';
+  
+  // Extrai as parcelas
+  pagamentoInfo.parcelas = extractParcelas(doc);
+  pagamentoInfo.totalParcelas = pagamentoInfo.parcelas.length;
+  
+  return pagamentoInfo;
+}
+
+function classificarOrigem(cfop) {
+    if (!cfop) return {texto: 'Não identificado', classe: 'origem-outro'};
+    if (cfop.startsWith('1') || cfop.startsWith('2') || cfop.startsWith('3')) {
+        return {texto: 'Nacional', classe: 'origem-nacional'};
+    } else if (cfop.startsWith('5') || cfop.startsWith('6') || cfop.startsWith('7')) {
+        return {texto: 'Interestadual', classe: 'origem-interestadual'};
+    } else if (cfop.startsWith('350') || cfop.startsWith('351') || cfop.startsWith('352')) {
+        return {texto: 'Importação', classe: 'origem-importacao'};
+    }
+    return {texto: 'Outro', classe: 'origem-outro'};
+}
+
+function extractCommon(doc){
+  const out = {};
+  out.emit_cnpj = findFirstTextFrom(doc, ['emit/CNPJ', 'emit/CNPJ']);
+  out.numero_serie = findFirstTextFrom(doc, ['ide/serie','ide/nSerie','ide/serie']);
+  out.numero_nota = findFirstTextFrom(doc, ['ide/nNF']);
+  out.data_emissao = findFirstTextFrom(doc, ['ide/dhEmi','ide/dEmi']);
+  out.data_entrada = out.data_emissao;
+  out.modelo = findFirstTextFrom(doc, ['ide/mod']);
+  out.tipo_documento = findFirstTextFrom(doc, ['pag/tPag','cobr/fat/nFat']);
+  out.chave_acesso = findFirstTextFrom(doc, ['infNFe/@Id','protNFe/infProt/chNFe']);
+  out.numero_pedido = extractNumeroPedido(doc); // Extrai o número do pedido
+
+  // Extrai informações de pagamento
+  const pagamentoInfo = extractPagamentoInfo(doc);
+  out.pagamento_tipo = pagamentoInfo.tipoPagamento;
+  out.parcelas = pagamentoInfo.parcelas;
+  out.total_parcelas = pagamentoInfo.totalParcelas;
+
+  out.itens = [];
+  const dets = getElementsByLocalName(doc, 'det');
+  for(const det of dets){
+    const prodCandidates = getElementsByLocalName(det, 'prod');
+    const prod = prodCandidates.length ? prodCandidates[0] : null;
+    if(!prod) continue;
+    const descricao = findFirstTextFrom(prod, ['xProd']) || '';
+    const cfop = findFirstTextFrom(prod, ['CFOP']) || findFirstTextFrom(det, ['CFOP']) || '';
+    const qCom = findFirstTextFrom(prod, ['qCom','qTrib']) || '';
+    const vUn = findFirstTextFrom(prod, ['vUnCom','vUn']) || '';
+    const vProd = findFirstTextFrom(prod, ['vProd']) || '';
+    const icms = findFirstTextFrom(det, ['ICMS/*/vICMS','ICMS/*/pICMS']) || '';
+    
+    const origem = classificarOrigem(cfop);
+    
+    out.itens.push({
+      descricao, 
+      cfop, 
+      origem: origem.texto,
+      classeOrigem: origem.classe,
+      qCom, 
+      vUn, 
+      vProd, 
+      icms
+    });
+  }
+
+  out.valor_total = findFirstTextFrom(doc, ['ICMSTot/vNF','vNF']);
+  out.duplicata_nDup = findFirstTextFrom(doc, ['cobr/dup/nDup','dup/nDup']);
+  out.duplicata_dVenc = findFirstTextFrom(doc, ['cobr/dup/dVenc','dup/dVenc']);
+  out.duplicata_vDup = findFirstTextFrom(doc, ['cobr/dup/vDup','dup/vDup']);
+
+  return out;
+}
+
+function copyText(t){
+  if(!navigator.clipboard) {
+    const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy')}catch(e){} ta.remove();
+    return;
+  }
+  navigator.clipboard.writeText(t).catch(()=>alert('Não foi possível copiar para área de transferência'));
+}
+
+function updateNavigationButtons() {
+  const btnPrev = qs('#btnPrev');
+  const btnNext = qs('#btnNext');
+  const btnCopyTotalFiles = qs('#btnCopyTotalFiles');
+  
+  btnPrev.disabled = appState.currentFileIndex <= 0;
+  btnNext.disabled = appState.currentFileIndex >= appState.files.length - 1;
+  
+  if (appState.files.length > 0) {
+    qs('#currentFile').textContent = `${appState.currentFileIndex + 1} de ${appState.files.length}: ${appState.files[appState.currentFileIndex].name}`;
+    btnCopyTotalFiles.textContent = `Copiar Total: ${appState.files.length}`;
+    btnCopyTotalFiles.disabled = false;
+  } else {
+    qs('#currentFile').textContent = 'Nenhum arquivo selecionado';
+    btnCopyTotalFiles.textContent = 'Copiar Total: 0';
+    btnCopyTotalFiles.disabled = true;
+  }
+}
+
+// Função para formatar valores monetários com vírgula
+function formatarValorMonetario(valor) {
+  if (!valor) return '';
+  
+  // Converte para número e formata com 2 casas decimais
+  const numero = parseFloat(valor);
+  if (isNaN(numero)) return valor;
+  
+  // Formata com vírgula para decimais
+  return numero.toFixed(2).replace('.', ',');
+}
+
+function copyAllItems() {
+  const currentData = appState.parsedData[appState.currentFileIndex];
+  if (!currentData || !currentData.itens || currentData.itens.length === 0) {
+    return;
+  }
+
+  const allItemsText = currentData.itens.map((it, index) => {
+    const itemId = `${appState.currentFileIndex}-${index}`;
+    const itemCRD = appState.itemCRDs[itemId] || { crd1: '', crd2: '', valor: '' };
+    
+    return [
+      index + 1,
+      it.descricao,
+      it.cfop,
+      it.origem,
+      it.qCom,
+      formatarValorMonetario(it.vUn),
+      formatarValorMonetario(it.vProd),
+      it.icms,
+      currentData.emit_cnpj || '',
+      currentData.numero_serie || '',
+      currentData.numero_nota || '',
+      currentData.data_emissao || '',
+      currentData.data_entrada || '',
+      currentData.modelo || '',
+      currentData.tipo_documento || '',
+      formatarValorMonetario(currentData.valor_total),
+      currentData.duplicata_nDup || '',
+      currentData.duplicata_dVenc || '',
+      formatarValorMonetario(currentData.duplicata_vDup),
+      currentData.chave_acesso || '',
+      currentData.numero_pedido || '', // Número do pedido
+      appState.paymentData.tipoPagamento,
+      appState.paymentData.parcelas,
+      itemCRD.crd1,
+      itemCRD.crd2,
+      formatarValorMonetario(itemCRD.valor)
+    ].join('\t');
+  }).join('\n');
+
+  const header = [
+    '#', 'Descrição', 'CFOP', 'Origem', 'Qtd', 'V.Unit', 'V.Total', 'ICMS',
+    'CNPJ Emissor', 'Número Série', 'Número Nota', 'Data Emissão', 'Data Entrada',
+    'Modelo', 'Tipo Documento', 'Valor Total', 'Duplicata nDup', 'Duplicata dVenc',
+    'Duplicata vDup', 'Chave Acesso', 'Número Pedido', 'Tipo Pagamento', 'Parcelas', 'CRD1', 'CRD2', 'Valor'
+  ].join('\t');
+  
+  const fullText = header + '\n' + allItemsText;
+  copyText(fullText);
+
+  currentData.itens.forEach((_, idx) => {
+    const itemId = `${appState.currentFileIndex}-${idx}`;
+    appState.copiedItems.add(itemId);
+  });
+
+  updateItemsVisualState();
+
+  const copyAllBtn = qs('#copyAllBtn');
+  const originalText = copyAllBtn.textContent;
+  copyAllBtn.textContent = '✓ Todos os itens copiados!';
+  copyAllBtn.classList.add('copied');
+  
+  setTimeout(() => {
+    copyAllBtn.textContent = originalText;
+    copyAllBtn.classList.remove('copied');
+  }, 3000);
+}
+
+function updateItemsVisualState() {
+  const currentData = appState.parsedData[appState.currentFileIndex];
+  if (!currentData) return;
+
+  currentData.itens.forEach((_, idx) => {
+    const itemId = `${appState.currentFileIndex}-${idx}`;
+    const isCopied = appState.copiedItems.has(itemId);
+    const row = qs(`[data-item-id="${itemId}"]`);
+    const copyBtn = qs(`[data-copy-btn="${itemId}"]`);
+    
+    if (row) {
+      if (isCopied) {
+        row.classList.add('item-copied');
+      } else {
+        row.classList.remove('item-copied');
+      }
+    }
+    
+    if (copyBtn) {
+      if (isCopied) {
+        copyBtn.textContent = 'Copiado';
+        copyBtn.classList.add('copied');
+      } else {
+        copyBtn.textContent = 'Copiar';
+        copyBtn.classList.remove('copied');
+      }
+    }
+  });
+}
+
+function formatCompactData(value, maxLength = 12) {
+  if (!value) return '';
+  if (value.length > maxLength) {
+    return value.substring(0, maxLength) + '...';
+  }
+  return value;
+}
+
+// FUNÇÃO CORRIGIDA PARA FORMATAR DATAS - SEM PROBLEMA DE FUSO HORÁRIO
+function formatarData(dataString) {
+  if (!dataString) return '';
+  
+  // Se já estiver no formato brasileiro, retorna como está
+  if (dataString.match(/\d{2}\/\d{2}\/\d{4}/)) {
+    return dataString;
+  }
+  
+  // Para formato YYYY-MM-DD (comum em XML)
+  if (dataString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    const partes = dataString.split('-');
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  }
+  
+  // Para formato YYYY-MM-DDTHH:mm:ss (com timestamp)
+  if (dataString.match(/^\d{4}-\d{2}-\d{2}T/)) {
+    const dataPart = dataString.split('T')[0];
+    const partes = dataPart.split('-');
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  }
+  
+  // Tenta converter outros formatos
+  try {
+    // Usa UTC para evitar problemas de fuso horário
+    const data = new Date(dataString + 'T00:00:00Z');
+    if (!isNaN(data.getTime())) {
+      const dia = String(data.getUTCDate()).padStart(2, '0');
+      const mes = String(data.getUTCMonth() + 1).padStart(2, '0');
+      const ano = data.getUTCFullYear();
+      return `${dia}/${mes}/${ano}`;
+    }
+  } catch (e) {
+    console.log('Erro ao formatar data:', dataString, e);
+  }
+  
+  return dataString;
+}
+
+// Função para copiar próximo item no ciclo
+function copiarProximoNoCiclo(parcelas) {
+  const parcelasFiltradas = parcelas.filter(p => p.vencimento && p.valor);
+  
+  if (parcelasFiltradas.length === 0) {
+    alert('Não há parcelas com datas e valores disponíveis.');
+    return;
+  }
+
+  // Se chegou ao final, reinicia o ciclo
+  if (cicloParcelas.index >= parcelasFiltradas.length) {
+    cicloParcelas.index = 0;
+    cicloParcelas.tipo = 'data';
+  }
+
+  const parcelaAtual = parcelasFiltradas[cicloParcelas.index];
+  let textoParaCopiar = '';
+  let descricao = '';
+
+  if (cicloParcelas.tipo === 'data') {
+    textoParaCopiar = formatarData(parcelaAtual.vencimento);
+    descricao = `Data da Parcela ${cicloParcelas.index + 1}: ${textoParaCopiar}`;
+    // Próximo passo: valor da mesma parcela
+    cicloParcelas.tipo = 'valor';
+  } else {
+    textoParaCopiar = formatarValorMonetario(parcelaAtual.valor);
+    descricao = `Valor da Parcela ${cicloParcelas.index + 1}: R$ ${textoParaCopiar}`;
+    // Próximo passo: data da próxima parcela
+    cicloParcelas.tipo = 'data';
+    cicloParcelas.index++;
+  }
+
+  copyText(textoParaCopiar);
+  
+  // Atualiza o botão para mostrar o que foi copiado
+  const copyNextBtn = qs('#copyNextBtn');
+  if (copyNextBtn) {
+    const originalText = copyNextBtn.textContent;
+    copyNextBtn.textContent = `✓ ${descricao}`;
+    copyNextBtn.classList.add('copied');
+    
+    setTimeout(() => {
+      // Prepara o texto para o próximo clique
+      let proximoTexto = 'Copiar Próximo';
+      if (cicloParcelas.index < parcelasFiltradas.length || cicloParcelas.tipo === 'valor') {
+        const proximaParcela = cicloParcelas.tipo === 'valor' ? 
+          parcelasFiltradas[cicloParcelas.index] : 
+          parcelasFiltradas[cicloParcelas.index];
+        
+        if (proximaParcela) {
+          const numeroParcela = cicloParcelas.index + (cicloParcelas.tipo === 'valor' ? 0 : 1);
+          const tipoProximo = cicloParcelas.tipo === 'valor' ? 'Valor' : 'Data';
+          proximoTexto = `Próximo: ${tipoProximo} Parcela ${numeroParcela}`;
+        }
+      }
+      
+      copyNextBtn.textContent = proximoTexto;
+      copyNextBtn.classList.remove('copied');
+    }, 2000);
+  }
+}
+
+function renderParcelasSection(parcelas) {
+  if (!parcelas || parcelas.length === 0) {
+    return null;
+  }
+
+  const section = document.createElement('div');
+  section.className = 'parcelas-section';
+  
+  const title = document.createElement('h4');
+  title.style.margin = '0 0 10px 0';
+  title.style.color = '#166534';
+  title.textContent = `Parcelas (${parcelas.length}x)`;
+  
+  section.appendChild(title);
+  
+  parcelas.forEach((parcela, index) => {
+    const parcelaItem = document.createElement('div');
+    parcelaItem.className = 'parcela-item';
+    
+    const parcelaInfo = document.createElement('div');
+    parcelaInfo.className = 'parcela-info';
+    
+    const numeroElement = document.createElement('span');
+    numeroElement.className = 'parcela-numero';
+    numeroElement.textContent = `Parcela ${parcela.numero || (index + 1).toString().padStart(3, '0')}`;
+    
+    const dataFormatada = formatarData(parcela.vencimento);
+    const dataElement = document.createElement('span');
+    dataElement.className = 'parcela-data';
+    dataElement.textContent = parcela.vencimento ? `Vencimento: ${dataFormatada}` : 'Data não disponível';
+    
+    const valorFormatado = formatarValorMonetario(parcela.valor);
+    const valorElement = document.createElement('span');
+    valorElement.className = 'parcela-valor';
+    valorElement.textContent = parcela.valor ? `R$ ${valorFormatado}` : 'Valor não disponível';
+    
+    parcelaInfo.appendChild(numeroElement);
+    parcelaInfo.appendChild(document.createElement('br'));
+    parcelaInfo.appendChild(dataElement);
+    
+    const parcelaActions = document.createElement('div');
+    parcelaActions.className = 'parcela-actions';
+    
+    // Botão para copiar data da parcela
+    if (parcela.vencimento) {
+      const copyDataBtn = document.createElement('button');
+      copyDataBtn.className = 'copy-parcela-btn';
+      copyDataBtn.textContent = 'Copiar Data';
+      copyDataBtn.title = `Copiar data: ${dataFormatada}`;
+      copyDataBtn.addEventListener('click', () => {
+        copyText(dataFormatada);
+        copyDataBtn.textContent = 'Copiado!';
+        copyDataBtn.classList.add('copied');
+        setTimeout(() => {
+          copyDataBtn.textContent = 'Copiar Data';
+          copyDataBtn.classList.remove('copied');
+        }, 2000);
+      });
+      parcelaActions.appendChild(copyDataBtn);
+    }
+    
+    // Botão para copiar valor da parcela
+    if (parcela.valor) {
+      const copyValorBtn = document.createElement('button');
+      copyValorBtn.className = 'copy-parcela-btn';
+      copyValorBtn.textContent = 'Copiar Valor';
+      copyValorBtn.title = `Copiar valor: R$ ${valorFormatado}`;
+      copyValorBtn.addEventListener('click', () => {
+        copyText(parcela.valor);
+        copyValorBtn.textContent = 'Copiado!';
+        copyValorBtn.classList.add('copied');
+        setTimeout(() => {
+          copyValorBtn.textContent = 'Copiar Valor';
+          copyValorBtn.classList.remove('copied');
+        }, 2000);
+      });
+      parcelaActions.appendChild(copyValorBtn);
+    }
+    
+    parcelaItem.appendChild(parcelaInfo);
+    parcelaItem.appendChild(valorElement);
+    parcelaItem.appendChild(parcelaActions);
+    
+    section.appendChild(parcelaItem);
+  });
+
+  // Container para os botões
+  const botoesContainer = document.createElement('div');
+  botoesContainer.className = 'parcelas-buttons';
+
+  // Botão para copiar todas as datas COM VALORES
+  const copyAllDatesBtn = document.createElement('button');
+  copyAllDatesBtn.className = 'copy-parcela-btn';
+  copyAllDatesBtn.textContent = 'Copiar Todas as Datas com Valores';
+  copyAllDatesBtn.addEventListener('click', () => {
+    const parcelasFiltradas = parcelas.filter(p => p.vencimento && p.valor);
+    
+    if (parcelasFiltradas.length > 0) {
+      const todasDatasComValores = parcelasFiltradas
+        .map((p, index) => {
+          const dataFormatada = formatarData(p.vencimento);
+          const valorFormatado = formatarValorMonetario(p.valor);
+          // Adiciona ; apenas se não for o último item
+          const separador = index < parcelasFiltradas.length - 1 ? ';' : '';
+          return `${dataFormatada} ${valorFormatado}${separador}`;
+        })
+        .join('\n');
+      
+      copyText(todasDatasComValores);
+      copyAllDatesBtn.textContent = 'Datas e Valores Copiados!';
+      copyAllDatesBtn.classList.add('copied');
+      setTimeout(() => {
+        copyAllDatesBtn.textContent = 'Copiar Todas as Datas com Valores';
+        copyAllDatesBtn.classList.remove('copied');
+      }, 2000);
+    } else {
+      alert('Não há datas e valores disponíveis para copiar.');
+    }
+  });
+
+  // Botão para copiar próximo no ciclo
+  const copyNextBtn = document.createElement('button');
+  copyNextBtn.id = 'copyNextBtn';
+  copyNextBtn.className = 'copy-next-btn';
+  copyNextBtn.textContent = 'Copiar Próximo';
+  copyNextBtn.title = 'Clica para copiar data e valor das parcelas em sequência';
+  copyNextBtn.addEventListener('click', () => {
+    copiarProximoNoCiclo(parcelas);
+  });
+
+  botoesContainer.appendChild(copyAllDatesBtn);
+  botoesContainer.appendChild(copyNextBtn);
+  section.appendChild(botoesContainer);
+
+  return section;
+}
+
+function renderPaymentSection() {
+  const paymentSection = document.createElement('div');
+  paymentSection.className = 'payment-section';
+  
+  paymentSection.innerHTML = `
+    <h4 style="margin:0 0 10px 0; color:#0369a1;">Configuração de Pagamento</h4>
+    <div class="payment-grid">
+      <div class="payment-field">
+        <label class="payment-label">Tipo de Pagamento</label>
+        <select class="payment-select" id="tipoPagamento">
+          <option value="BOLETO">BOLETO</option>
+          <option value="PIX">PIX</option>
+          <option value="CARTAO_CREDITO">CARTÃO CRÉDITO</option>
+          <option value="CARTAO_DEBITO">CARTÃO DÉBITO</option>
+          <option value="DINHEIRO">DINHEIRO</option>
+          <option value="CHEQUE">CHEQUE</option>
+          <option value="OUTRO">OUTRO</option>
+        </select>
+      </div>
+      <div class="payment-field">
+        <label class="payment-label">Número de Parcelas</label>
+        <input type="number" class="payment-input" id="parcelas" min="1" value="1">
+      </div>
+    </div>
+    <button class="save-payment-btn" id="savePayment">Salvar Configuração</button>
+  `;
+
+  qs('#tipoPagamento', paymentSection).value = appState.paymentData.tipoPagamento;
+  qs('#parcelas', paymentSection).value = appState.paymentData.parcelas;
+
+  qs('#savePayment', paymentSection).addEventListener('click', () => {
+    appState.paymentData = {
+      tipoPagamento: qs('#tipoPagamento', paymentSection).value,
+      parcelas: qs('#parcelas', paymentSection).value
+    };
+    savePaymentData();
+    alert('Configuração de pagamento salva!');
+    const currentData = appState.parsedData[appState.currentFileIndex];
+    if (currentData) {
+      updatePaymentDataInTable();
+    }
+  });
+
+  return paymentSection;
+}
+
+function updatePaymentDataInTable() {
+  const currentData = appState.parsedData[appState.currentFileIndex];
+  if (!currentData) return;
+
+  currentData.itens.forEach((_, idx) => {
+    const itemId = `${appState.currentFileIndex}-${idx}`;
+    const pagamentoCell = qs(`[data-item-id="${itemId}"] td:nth-child(22)`);
+    const parcelasCell = qs(`[data-item-id="${itemId}"] td:nth-child(23)`);
+    
+    if (pagamentoCell) {
+      pagamentoCell.textContent = appState.paymentData.tipoPagamento;
+    }
+    if (parcelasCell) {
+      parcelasCell.textContent = appState.paymentData.parcelas;
+    }
+  });
+}
+
+function handleCRDChange(itemId, field, value) {
+  if (!appState.itemCRDs[itemId]) {
+    appState.itemCRDs[itemId] = { crd1: '', crd2: '', valor: '' };
+  }
+  appState.itemCRDs[itemId][field] = value;
+  saveItemCRDs();
+}
+
+function renderResult(data){
+  const res = document.getElementById('results');
+  res.innerHTML = '';
+  
+  appState.copiedItems.clear();
+  
+  // Reinicia o ciclo das parcelas quando um novo arquivo é carregado
+  cicloParcelas.index = 0;
+  cicloParcelas.tipo = 'data';
+  
+  const top = document.createElement('div'); top.className='card';
+  const grid = document.createElement('div'); grid.className='grid';
+
+  const fields = [
+    {k:'emit_cnpj', t:'CNPJ do emissor'},
+    {k:'numero_serie', t:'Número de série'},
+    {k:'numero_nota', t:'Número da nota'},
+    {k:'data_emissao', t:'Data de emissão'},
+    {k:'data_entrada', t:'Data de entrada'},
+    {k:'modelo', t:'Modelo da nota'},
+    {k:'tipo_documento', t:'Tipo de documento'},
+    {k:'valor_total', t:'Valor total'},
+    {k:'duplicata_nDup', t:'Duplicata - nDup'},
+    {k:'duplicata_dVenc', t:'Duplicata - dVenc'},
+    {k:'duplicata_vDup', t:'Duplicata - vDup'},
+    {k:'chave_acesso', t:'Chave de Acesso'},
+    {k:'numero_pedido', t:'Número do Pedido'},
+    {k:'pagamento_tipo', t:'Tipo de Pagamento (XML)'},
+    {k:'total_parcelas', t:'Total de Parcelas (XML)'}
+  ];
+
+  for(const f of fields){
+    const box = document.createElement('div'); box.className='field';
+    const title = document.createElement('div'); title.className='field-title'; title.textContent = f.t;
+    const val = document.createElement('div'); val.className='field-val'; val.id = f.k; 
+    
+    if (f.k === 'chave_acesso') {
+      val.textContent = data[f.k] ? data[f.k].replace('NFe', '') : '';
+      const chaveElement = document.createElement('div');
+      chaveElement.className = 'chave-acesso';
+      chaveElement.textContent = data[f.k] || '';
+      val.appendChild(chaveElement);
+    } else if (f.k === 'numero_pedido') {
+      const pedidoElement = document.createElement('div');
+      pedidoElement.className = 'numero-pedido';
+      pedidoElement.textContent = data[f.k] || 'Não encontrado';
+      val.appendChild(pedidoElement);
+    } else if (f.k === 'total_parcelas') {
+      val.textContent = data[f.k] > 0 ? `${data[f.k]} parcela(s)` : 'À vista';
+    } else if (f.k === 'valor_total' || f.k === 'duplicata_vDup') {
+      val.textContent = formatarValorMonetario(data[f.k]) || '';
+    } else {
+      val.textContent = data[f.k] || '';
+    }
+    
+    const btn = document.createElement('button'); btn.className='copy'; btn.textContent='Copiar';
+    btn.addEventListener('click', ()=>{
+      copyText(data[f.k] || '');
+      btn.textContent = 'Copiado!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copiar';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+    box.appendChild(title); box.appendChild(val); box.appendChild(btn);
+    grid.appendChild(box);
+  }
+
+  top.appendChild(grid);
+  res.appendChild(top);
+
+  // Adicionar seção de parcelas se houver
+  if (data.parcelas && data.parcelas.length > 0) {
+    const parcelasSection = renderParcelasSection(data.parcelas);
+    if (parcelasSection) {
+      res.appendChild(parcelasSection);
+    }
+  }
+
+  const paymentCard = document.createElement('div');
+  paymentCard.className = 'card';
+  paymentCard.appendChild(renderPaymentSection());
+  res.appendChild(paymentCard);
+
+  const cardIt = document.createElement('div'); cardIt.className='card';
+  
+  const itemsHeader = document.createElement('div');
+  itemsHeader.className = 'items-header';
+  
+  const h = document.createElement('h3'); 
+  h.textContent = 'Itens'; 
+  h.style.margin = '0';
+  
+  const copyAllBtn = document.createElement('button');
+  copyAllBtn.id = 'copyAllBtn';
+  copyAllBtn.className = 'copy-all-btn';
+  copyAllBtn.textContent = `Copiar todos os itens`;
+  
+  itemsHeader.appendChild(h);
+  itemsHeader.appendChild(copyAllBtn);
+  cardIt.appendChild(itemsHeader);
+
+  const tableContainer = document.createElement('div');
+  tableContainer.className = 'table-container';
+  
+  const table = document.createElement('table');
+  const thead = document.createElement('thead'); 
+  thead.innerHTML = `
+    <tr>
+      <th>#</th>
+      <th>Descrição</th>
+      <th>CFOP</th>
+      <th>Origem</th>
+      <th>Qtd</th>
+      <th>V.Unit</th>
+      <th>V.Total</th>
+      <th>ICMS</th>
+      <th>CNPJ</th>
+      <th>Série</th>
+      <th>Nota</th>
+      <th>Emissão</th>
+      <th>Entrada</th>
+      <th>Modelo</th>
+      <th>Doc Tipo</th>
+      <th>Total</th>
+      <th>nDup</th>
+      <th>dVenc</th>
+      <th>vDup</th>
+      <th>Chave</th>
+      <th>Pedido</th>
+      <th>Pagamento</th>
+      <th>Parcelas</th>
+      <th>CRD1</th>
+      <th>CRD2</th>
+      <th>Valor</th>
+      <th></th>
+    </tr>
+  `;
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  
+  data.itens.forEach((it, idx)=>{
+    const itemId = `${appState.currentFileIndex}-${idx}`;
+    const isCopied = appState.copiedItems.has(itemId);
+    const itemCRD = appState.itemCRDs[itemId] || { crd1: '', crd2: '', valor: '' };
+    
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-item-id', itemId);
+    
+    if (isCopied) {
+      tr.classList.add('item-copied');
+    }
+    
+    const origemElement = document.createElement('span');
+    origemElement.className = it.classeOrigem;
+    origemElement.textContent = it.origem;
+    
+    tr.innerHTML = `
+      <td>${idx+1}</td>
+      <td>${escapeHtml(it.descricao)}</td>
+      <td>${it.cfop}</td>
+      <td></td>
+      <td>${it.qCom}</td>
+      <td>${formatarValorMonetario(it.vUn)}</td>
+      <td>${formatarValorMonetario(it.vProd)}</td>
+      <td>${it.icms}</td>
+      <td class="compact-data">${formatCompactData(data.emit_cnpj || '')}</td>
+      <td class="compact-data">${data.numero_serie || ''}</td>
+      <td class="compact-data">${data.numero_nota || ''}</td>
+      <td class="compact-data">${formatCompactData(data.data_emissao || '')}</td>
+      <td class="compact-data">${formatCompactData(data.data_entrada || '')}</td>
+      <td class="compact-data">${data.modelo || ''}</td>
+      <td class="compact-data">${data.tipo_documento || ''}</td>
+      <td class="compact-data">${formatarValorMonetario(data.valor_total)}</td>
+      <td class="compact-data">${data.duplicata_nDup || ''}</td>
+      <td class="compact-data">${formatCompactData(data.duplicata_dVenc || '')}</td>
+      <td class="compact-data">${formatarValorMonetario(data.duplicata_vDup)}</td>
+      <td class="chave-acesso">${data.chave_acesso ? formatCompactData(data.chave_acesso.replace('NFe', ''), 15) : ''}</td>
+      <td class="numero-pedido">${data.numero_pedido || ''}</td>
+      <td class="compact-data">${appState.paymentData.tipoPagamento}</td>
+      <td class="compact-data">${appState.paymentData.parcelas}</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    `;
+    
+    const tdOrigem = tr.cells[3];
+    tdOrigem.appendChild(origemElement);
+    
+    // CRD1
+    const tdCRD1 = tr.cells[23];
+    const inputCRD1 = document.createElement('input');
+    inputCRD1.type = 'text';
+    inputCRD1.className = 'crd-input';
+    inputCRD1.value = itemCRD.crd1;
+    inputCRD1.placeholder = 'CRD1';
+    inputCRD1.addEventListener('input', (e) => {
+      handleCRDChange(itemId, 'crd1', e.target.value);
+    });
+    tdCRD1.appendChild(inputCRD1);
+    
+    // CRD2
+    const tdCRD2 = tr.cells[24];
+    const inputCRD2 = document.createElement('input');
+    inputCRD2.type = 'text';
+    inputCRD2.className = 'crd-input';
+    inputCRD2.value = itemCRD.crd2;
+    inputCRD2.placeholder = 'CRD2';
+    inputCRD2.addEventListener('input', (e) => {
+      handleCRDChange(itemId, 'crd2', e.target.value);
+    });
+    tdCRD2.appendChild(inputCRD2);
+    
+    // Valor
+    const tdValor = tr.cells[25];
+    const inputValor = document.createElement('input');
+    inputValor.type = 'text';
+    inputValor.className = 'valor-input';
+    inputValor.value = itemCRD.valor;
+    inputValor.placeholder = 'Valor';
+    inputValor.addEventListener('input', (e) => {
+      handleCRDChange(itemId, 'valor', e.target.value);
+    });
+    tdValor.appendChild(inputValor);
+    
+    const tdBtn = document.createElement('td');
+    const b = document.createElement('button'); 
+    b.className = isCopied ? 'copy-item-btn copied' : 'copy-item-btn';
+    b.textContent = isCopied ? 'Copiado' : 'Copiar';
+    b.setAttribute('data-copy-btn', itemId);
+    b.addEventListener('click', ()=>{
+      const line = [
+        it.descricao,
+        it.cfop,
+        it.origem,
+        it.qCom,
+        formatarValorMonetario(it.vUn),
+        formatarValorMonetario(it.vProd),
+        it.icms,
+        data.emit_cnpj || '',
+        data.numero_serie || '',
+        data.numero_nota || '',
+        data.data_emissao || '',
+        data.data_entrada || '',
+        data.modelo || '',
+        data.tipo_documento || '',
+        formatarValorMonetario(data.valor_total),
+        data.duplicata_nDup || '',
+        data.duplicata_dVenc || '',
+        formatarValorMonetario(data.duplicata_vDup),
+        data.chave_acesso || '',
+        data.numero_pedido || '', // Número do pedido
+        appState.paymentData.tipoPagamento,
+        appState.paymentData.parcelas,
+        itemCRD.crd1,
+        itemCRD.crd2,
+        formatarValorMonetario(itemCRD.valor)
+      ].join('\t');
+      
+      copyText(line);
+      
+      appState.copiedItems.add(itemId);
+      b.textContent = 'Copiado';
+      b.classList.add('copied');
+      tr.classList.add('item-copied');
+      
+      checkAllItemsCopied();
+    });
+    tdBtn.appendChild(b);
+    tr.appendChild(tdBtn);
+    tbody.appendChild(tr);
+  });
+  
+  table.appendChild(tbody);
+  tableContainer.appendChild(table);
+  cardIt.appendChild(tableContainer);
+  res.appendChild(cardIt);
+
+  copyAllBtn.addEventListener('click', copyAllItems);
+
+  const cardInstr = document.createElement('div'); cardInstr.className='card';
+  cardInstr.innerHTML = `
+    <strong>Procedimento sugerido para entrada de itens</strong>
+    <ol>
+      <li>Inserir item</li>
+      <li>Selecionar o tipo/TES (se aplicável)</li>
+      <li>Usar o CFOP informado na nota (coluna CFOP)</li>
+      <li>Verificar ICMS: se zerado → aplicar padrão "A"; se tiver valor → aplicar padrão "B"</li>
+      <li>Verificar origem do produto pela classificação do CFOP</li>
+    </ol>
+    <div style="margin-top:10px;">
+      <strong>Legenda de Origem:</strong>
+      <div style="display:flex;gap:10px;margin-top:5px;flex-wrap:wrap">
+        <span class="origem-nacional">Nacional</span>
+        <span class="origem-importacao">Importação</span>
+        <span class="origem-interestadual">Interestadual</span>
+        <span class="origem-outro">Outro/Não identificado</span>
+      </div>
+    </div>
+    <p class="small" style="margin-top:10px;">Observação: o arquivo XML pode não conter informações de TES ou rateio — nesses casos, ajuste manualmente após colar os dados.</p>`;
+  res.appendChild(cardInstr);
+}
+
+function checkAllItemsCopied() {
+  const currentData = appState.parsedData[appState.currentFileIndex];
+  if (!currentData) return;
+  
+  const allItemsCopied = currentData.itens.every((_, idx) => {
+    const itemId = `${appState.currentFileIndex}-${idx}`;
+    return appState.copiedItems.has(itemId);
+  });
+  
+  if (allItemsCopied && currentData.itens.length > 0) {
+    const copyAllBtn = qs('#copyAllBtn');
+    if (copyAllBtn) {
+      copyAllBtn.textContent = '✓ Todos os itens copiados!';
+      copyAllBtn.classList.add('copied');
+    }
+  }
+}
+
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]})}
+
+// handlers
+qs('#file').addEventListener('change', async (ev)=>{
+  const files = Array.from(ev.target.files);
+  if(files.length === 0) return;
+  
+  appState.files = files;
+  appState.parsedData = [];
+  appState.currentFileIndex = 0;
+  
+  qs('#status').textContent = `Processando ${files.length} arquivo(s)...`;
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    try {
+      const txt = await file.text();
+      const doc = parseXmlString(txt);
+      const data = extractCommon(doc);
+      appState.parsedData[i] = data;
+    } catch(e) {
+      console.error(`Erro ao processar ${file.name}:`, e);
+      appState.parsedData[i] = { error: e.message, itens: [] };
+    }
+  }
+  
+  displayCurrentFile();
+  updateNavigationButtons();
+});
+
+function displayCurrentFile() {
+  if (appState.currentFileIndex < 0 || appState.currentFileIndex >= appState.parsedData.length) {
+    qs('#status').textContent = 'Nenhum arquivo para exibir';
+    document.getElementById('results').innerHTML = '';
+    return;
+  }
+  
+  const currentData = appState.parsedData[appState.currentFileIndex];
+  const currentFile = appState.files[appState.currentFileIndex];
+  
+  if (currentData.error) {
+    qs('#status').textContent = `Erro no arquivo ${currentFile.name}: ${currentData.error}`;
+    document.getElementById('results').innerHTML = '';
+  } else {
+    renderResult(currentData);
+    qs('#status').textContent = `Arquivo ${appState.currentFileIndex + 1} de ${appState.files.length}: ${currentFile.name}`;
+    window._lastData = currentData;
+  }
+}
+
+// Botão para copiar total de documentos
+qs('#btnCopyTotalFiles').addEventListener('click', () => {
+  const totalFiles = appState.files.length;
+  if (totalFiles > 0) {
+    copyText(totalFiles.toString());
+    const btn = qs('#btnCopyTotalFiles');
+    const originalText = btn.textContent;
+    btn.textContent = `Copiado: ${totalFiles}`;
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.classList.remove('copied');
+    }, 2000);
+  }
+});
+
+qs('#btnPrev').addEventListener('click', ()=>{
+  if (appState.currentFileIndex > 0) {
+    appState.currentFileIndex--;
+    displayCurrentFile();
+    updateNavigationButtons();
+  }
+});
+
+qs('#btnNext').addEventListener('click', ()=>{
+  if (appState.currentFileIndex < appState.files.length - 1) {
+    appState.currentFileIndex++;
+    displayCurrentFile();
+    updateNavigationButtons();
+  }
+});
+
+qs('#btnClear').addEventListener('click', ()=>{
+  qs('#file').value=''; 
+  document.getElementById('results').innerHTML=''; 
+  qs('#status').textContent=''; 
+  appState.files = [];
+  appState.parsedData = [];
+  appState.currentFileIndex = -1;
+  appState.copiedItems.clear();
+  updateNavigationButtons();
+  window._lastData=null;
+});
+
+qs('#btnExportJson').addEventListener('click', ()=>{
+  if(!window._lastData) return alert('Nenhum arquivo processado');
+  const blob = new Blob([JSON.stringify(window._lastData, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='nota.json'; a.click(); URL.revokeObjectURL(url);
+});
+
+qs('#btnExportCsv').addEventListener('click', ()=>{
+  if(!window._lastData) return alert('Nenhum arquivo processado');
+  const rows = [[
+    'Descrição','CFOP','Origem','Quantidade','Valor Unitário','Valor Total','ICMS',
+    'CNPJ Emissor','Número Série','Número Nota','Data Emissão','Data Entrada',
+    'Modelo','Tipo Documento','Valor Total','Duplicata nDup','Duplicata dVenc',
+    'Duplicata vDup','Chave Acesso','Número Pedido','Tipo Pagamento','Parcelas','CRD1','CRD2','Valor'
+  ]];
+  window._lastData.itens.forEach((it, idx) => {
+    const itemId = `${appState.currentFileIndex}-${idx}`;
+    const itemCRD = appState.itemCRDs[itemId] || { crd1: '', crd2: '', valor: '' };
+    
+    rows.push([
+      it.descricao, it.cfop, it.origem, it.qCom, formatarValorMonetario(it.vUn), formatarValorMonetario(it.vProd), it.icms,
+      window._lastData.emit_cnpj || '', window._lastData.numero_serie || '', 
+      window._lastData.numero_nota || '', window._lastData.data_emissao || '',
+      window._lastData.data_entrada || '', window._lastData.modelo || '',
+      window._lastData.tipo_documento || '', formatarValorMonetario(window._lastData.valor_total),
+      window._lastData.duplicata_nDup || '', window._lastData.duplicata_dVenc || '',
+      formatarValorMonetario(window._lastData.duplicata_vDup), window._lastData.chave_acesso || '',
+      window._lastData.numero_pedido || '', // Número do pedido
+      appState.paymentData.tipoPagamento, appState.paymentData.parcelas,
+      itemCRD.crd1, itemCRD.crd2, formatarValorMonetario(itemCRD.valor)
+    ]);
+  });
+  const csv = rows.map(r => r.map(c => `"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='itens.csv'; a.click(); URL.revokeObjectURL(url);
+});
+
+</script>
+</body>
+</html>
