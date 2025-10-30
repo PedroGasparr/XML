@@ -347,13 +347,54 @@ function classificarOrigem(cfop) {
     return {texto: 'Outro', classe: 'origem-outro'};
 }
 
+// FUNÇÃO ATUALIZADA PARA FORMATAR DATAS NO FORMATO BRASILEIRO
+function formatarDataHora(dataString) {
+  if (!dataString) return '';
+  
+  // Se já estiver no formato brasileiro, retorna como está
+  if (dataString.match(/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/)) {
+    return dataString;
+  }
+  
+  // Para formato ISO (YYYY-MM-DDTHH:mm:ss)
+  if (dataString.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)) {
+    try {
+      const data = new Date(dataString);
+      if (!isNaN(data.getTime())) {
+        const dia = String(data.getDate()).padStart(2, '0');
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const ano = data.getFullYear();
+        const horas = String(data.getHours()).padStart(2, '0');
+        const minutos = String(data.getMinutes()).padStart(2, '0');
+        return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
+      }
+    } catch (e) {
+      console.log('Erro ao formatar data/hora:', dataString, e);
+    }
+  }
+  
+  // Para formato YYYY-MM-DD (sem hora)
+  if (dataString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    const partes = dataString.split('-');
+    return `${partes[2]}/${partes[1]}/${partes[0]} 00:00`;
+  }
+  
+  return dataString;
+}
+
 function extractCommon(doc){
   const out = {};
   out.emit_cnpj = findFirstTextFrom(doc, ['emit/CNPJ', 'emit/CNPJ']);
   out.numero_serie = findFirstTextFrom(doc, ['ide/serie','ide/nSerie','ide/serie']);
   out.numero_nota = findFirstTextFrom(doc, ['ide/nNF']);
-  out.data_emissao = findFirstTextFrom(doc, ['ide/dhEmi','ide/dEmi']);
-  out.data_entrada = out.data_emissao;
+  
+  // Extrai as datas e formata no padrão brasileiro
+  const dataEmissaoRaw = findFirstTextFrom(doc, ['ide/dhEmi','ide/dEmi']);
+  out.data_emissao = formatarDataHora(dataEmissaoRaw);
+  
+  const dataEntradaRaw = out.data_emissao; // Mantém o mesmo comportamento anterior
+  out.data_entrada = formatarDataHora(dataEntradaRaw);
+  
   out.modelo = findFirstTextFrom(doc, ['ide/mod']);
   out.tipo_documento = findFirstTextFrom(doc, ['pag/tPag','cobr/fat/nFat']);
   out.chave_acesso = findFirstTextFrom(doc, ['infNFe/@Id','protNFe/infProt/chNFe']);
@@ -1025,8 +1066,8 @@ function renderResult(data){
       <td class="compact-data">${formatCompactData(data.emit_cnpj || '')}</td>
       <td class="compact-data">${data.numero_serie || ''}</td>
       <td class="compact-data">${data.numero_nota || ''}</td>
-      <td class="compact-data">${formatCompactData(data.data_emissao || '')}</td>
-      <td class="compact-data">${formatCompactData(data.data_entrada || '')}</td>
+      <td class="compact-data">${data.data_emissao || ''}</td>
+      <td class="compact-data">${data.data_entrada || ''}</td>
       <td class="compact-data">${data.modelo || ''}</td>
       <td class="compact-data">${data.tipo_documento || ''}</td>
       <td class="compact-data">${formatarValorMonetario(data.valor_total)}</td>
